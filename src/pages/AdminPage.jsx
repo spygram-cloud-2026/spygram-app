@@ -34,7 +34,7 @@ import {
 } from '../utils/pixPayloadGenerator';
 
 export default function AdminPage() {
-  const { leads, updateLeadStatus, deleteLead, targetUser } = useApp();
+  const { leads, refreshLeads, updateLeadStatus, deleteLead, targetUser } = useApp();
 
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -46,6 +46,33 @@ export default function AdminPage() {
   const [pageViews, setPageViews] = useState(() => {
     return parseInt(localStorage.getItem('spygram_page_views') || '142', 10);
   });
+
+  React.useEffect(() => {
+    if (!isAuthenticated) return;
+    refreshLeads();
+    fetch('/api/stats')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.db && typeof data.pageViews === 'number') {
+          setPageViews(data.pageViews);
+        }
+      })
+      .catch(() => {});
+    fetch('/api/config/pix_config')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.db && data?.value?.key) {
+          savePixConfig(data.value);
+          setPixKey(data.value.key);
+          setPixKeyType(data.value.keyType || 'auto');
+          setPixName(data.value.name || 'SPYGRAM TECNOLOGIA');
+          setPixCity(data.value.city || 'SAO PAULO');
+          setPixTxid(data.value.txid || '***');
+          setIsPixConfigured(true);
+        }
+      })
+      .catch(() => {});
+  }, [isAuthenticated]);
 
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -120,7 +147,12 @@ export default function AdminPage() {
 
     setPixKey(saved.key);
     setIsPixConfigured(true);
-    toast.success('Chave Pix configurada no Padrão Banco Central! ✅');
+    fetch('/api/config/pix_config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(saved)
+    }).catch(() => {});
+    toast.success('Chave Pix configurada e sincronizada com o banco! ✅');
 
     // Atualiza o preview de teste automaticamente se já estava aberto
     if (testPixPayload) {

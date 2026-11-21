@@ -28,10 +28,11 @@ export default function LandingPage() {
     const current = parseInt(localStorage.getItem('spygram_page_views') || '142', 10);
     localStorage.setItem('spygram_page_views', (current + 1).toString());
 
-    // Disparar notificação de nova visita uma vez por sessão
+    // Disparar notificação de nova visita e registrar visualização no banco uma vez por sessão
     if (!sessionStorage.getItem('spygram_visit_notified')) {
       sessionStorage.setItem('spygram_visit_notified', 'true');
       notifyNewVisit(visitorLocation);
+      fetch('/api/stats/view', { method: 'POST' }).catch(() => {});
     }
 
     const active = localStorage.getItem('spygram_active_invasion');
