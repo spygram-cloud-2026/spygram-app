@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: spygram-app
+    runtime: docker
+    plan: free
+    envVars:
+      - key: PORT
+        value: "3000"
+      - key: PUPPETEER_EXECUTABLE_PATH
+        value: "/usr/bin/chromium"
+      - key: VITE_ADMIN_PASSWORD
+        value: "admin123"

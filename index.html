@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>SpyGram - Espione qualquer Instagram</title>
+    <meta name="description" content="SpyGram. O que seu Cônjuge faz quando está no Instagram? Descubra a verdade sobre qualquer pessoa, acessando o instagram dela! Espionar Agora. 100% Anônimo ..." />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            animation: {
+              'tilt': 'tilt 10s infinite linear',
+              'bounce-slow': 'bounce-slow 2s infinite ease-in-out',
+              'spin-slow': 'spin-slow 5s linear infinite',
+              'pulse-slow': 'pulse-slow 4s infinite ease-in-out alternate',
+              'shine-sweep': 'shine-sweep 2s infinite linear',
+              'fade-in': 'fadeIn 0.8s ease-in forwards'
+            },
+            keyframes: {
+              tilt: {
+                '0%, 50%, 100%': { transform: 'rotate(0deg)' },
+                '25%': { transform: 'rotate(0.5deg)' },
+                '75%': { transform: 'rotate(-0.5deg)' }
+              },
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' }
+              }
+            }
+          }
+        }
+      }
+    </script>
+  </head>
+  <body class="bg-black">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
