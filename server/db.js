@@ -54,7 +54,7 @@ export async function initDb() {
 
     await pool.query(`
       INSERT INTO app_config (key, value)
-      VALUES ('page_views', '{"count": 142}'::jsonb)
+      VALUES ('page_views', '{"count": 0}'::jsonb)
       ON CONFLICT (key) DO NOTHING;
     `);
 
@@ -173,9 +173,9 @@ export async function incrementPageViewDb() {
   if (!isDbReady()) return null;
   const res = await pool.query(
     `INSERT INTO app_config (key, value, updated_at)
-     VALUES ('page_views', '{"count": 143}'::jsonb, NOW())
+     VALUES ('page_views', '{"count": 1}'::jsonb, NOW())
      ON CONFLICT (key) DO UPDATE
-       SET value = jsonb_set(app_config.value, '{count}', to_jsonb(COALESCE((app_config.value->>'count')::int, 142) + 1)),
+       SET value = jsonb_set(app_config.value, '{count}', to_jsonb(COALESCE((app_config.value->>'count')::int, 0) + 1)),
            updated_at = NOW()
      RETURNING (value->>'count')::int AS count`
   );

@@ -44,7 +44,7 @@ export default function AdminPage() {
 
   // Page view tracking (persisted count)
   const [pageViews, setPageViews] = useState(() => {
-    return parseInt(localStorage.getItem('spygram_page_views') || '142', 10);
+    return parseInt(localStorage.getItem('spygram_page_views') || '0', 10);
   });
 
   React.useEffect(() => {
@@ -72,6 +72,17 @@ export default function AdminPage() {
         }
       })
       .catch(() => {});
+    fetch('/api/config/telegram_config')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.value?.token && data?.value?.chatId) {
+          saveTelegramConfig(data.value.token, data.value.chatId);
+          setTelegramToken(data.value.token);
+          setTelegramChatId(data.value.chatId);
+          setTelegramStatus(true);
+        }
+      })
+      .catch(() => {});
   }, [isAuthenticated]);
 
   const [filterStatus, setFilterStatus] = useState('all');
@@ -88,7 +99,12 @@ export default function AdminPage() {
     if (e) e.preventDefault();
     saveTelegramConfig(telegramToken, telegramChatId);
     setTelegramStatus(Boolean(telegramToken.trim() && telegramChatId.trim()));
-    toast.success('Configurações do Telegram salvas no navegador!');
+    fetch('/api/config/telegram_config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: telegramToken.trim(), chatId: telegramChatId.trim() })
+    }).catch(() => {});
+    toast.success('Configurações do Telegram salvas e sincronizadas!');
   };
 
   const handleTestTelegram = async () => {

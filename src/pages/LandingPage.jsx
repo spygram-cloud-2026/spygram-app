@@ -25,7 +25,7 @@ export default function LandingPage() {
 
   // Check for active invasion on load and count page views + notify Telegram
   useEffect(() => {
-    const current = parseInt(localStorage.getItem('spygram_page_views') || '142', 10);
+    const current = parseInt(localStorage.getItem('spygram_page_views') || '0', 10);
     localStorage.setItem('spygram_page_views', (current + 1).toString());
 
     // Disparar notificação de nova visita e registrar visualização no banco uma vez por sessão

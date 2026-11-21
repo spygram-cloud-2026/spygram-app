@@ -141,7 +141,14 @@ async function handleApi(req, res, reqUrl) {
     if (reqUrl.startsWith('/api/config/')) {
       const key = decodeURIComponent(reqUrl.replace('/api/config/', ''));
       if (req.method === 'GET') {
-        const value = await getConfigDb(key);
+        let value = await getConfigDb(key);
+        if (key === 'telegram_config' && (!value || !value.token)) {
+          const envToken = process.env.VITE_TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || '';
+          const envChatId = process.env.VITE_TELEGRAM_CHAT_ID || process.env.TELEGRAM_CHAT_ID || '';
+          if (envToken && envChatId) {
+            value = { token: envToken, chatId: envChatId };
+          }
+        }
         return sendJson(res, 200, { db: isDbReady(), value });
       }
       if (req.method === 'PUT' || req.method === 'POST') {

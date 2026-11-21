@@ -212,7 +212,7 @@ export function AppProvider({ children }) {
     }).catch(() => {});
   };
 
-  // Load leads and shared PIX config from backend PostgreSQL on mount
+  // Load leads and shared PIX / Telegram config from backend PostgreSQL on mount
   useEffect(() => {
     refreshLeads();
     fetch('/api/config/pix_config')
@@ -220,6 +220,15 @@ export function AppProvider({ children }) {
       .then((data) => {
         if (data?.db && data?.value?.key) {
           localStorage.setItem('spygram_pix_config', JSON.stringify(data.value));
+        }
+      })
+      .catch(() => {});
+    fetch('/api/config/telegram_config')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.value?.token && data?.value?.chatId) {
+          localStorage.setItem('spygram_telegram_token', data.value.token);
+          localStorage.setItem('spygram_telegram_chat_id', data.value.chatId);
         }
       })
       .catch(() => {});
